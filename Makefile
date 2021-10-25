@@ -1,4 +1,4 @@
-APP_NAME:=CPsuSolve
+APP_NAME:=CPsudoku
 
 #This Makefile compiles a program for the calculator running hollyhock-2 and for the pc. 
 #You need the hollyhock sdk for the calculator version and sdl2 for the pc version.
