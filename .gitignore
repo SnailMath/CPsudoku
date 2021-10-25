@@ -1,0 +1,10 @@
+# Compiled files
+*.o
+*.hhk
+*.bin
+*.elf
+# Temp files
+*~
+.*~
+# Backup files
+*_back*
