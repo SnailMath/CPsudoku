@@ -4,7 +4,7 @@
 	APP_NAME("CPsudoku")
 	APP_DESCRIPTION("Sudoku game & solver. To start a new game: Random > 75\% > Set (Use 'Keyboard' to go to the menu)")
 	APP_AUTHOR("SnailMath")
-	APP_VERSION("1.0.0")
+	APP_VERSION("1.0.1")
 #endif
 
 void square(int x, int y, int w, int h, uint16_t c){
@@ -90,7 +90,9 @@ int menuselected;
 #define	MENU_SET 	4
 #define	MENU_CHECK  	5
 #define	MENU_SOLVE_1 	6
-#define MENUITEMS	7
+#define	MENU_SOLVE_2 	7
+#define	MENU_ZEITUNG 	8
+#define MENUITEMS	9
 
 uint8_t su_val(uint16_t sudoku){
 	for(int i=0;i<9;i++) if(sudoku==(1<<i)) return i+1;
@@ -135,6 +137,8 @@ void sudoku_draw(){
 	digitprint("set"	, 30, 330+(line++*18), 6, 3, 0);
 	digitprint("check"	, 30, 330+(line++*18), 6, 3, 0);
 	digitprint("solve 1"	, 30, 330+(line++*18), 6, 3, 0);
+	digitprint("solve 2"	, 30, 330+(line++*18), 6, 3, 0);
+	digitprint("zeitung"	, 30, 330+(line++*18), 6, 3, 0);
 	if(mode==MODE_MENU) triangle(5,330+2+(menuselected*18), 5+20,330+9+(menuselected*18), 5,330+16+(menuselected*18), color(255,0,0),color(255,0,0));
 	LCD_Refresh();
 }
@@ -313,7 +317,6 @@ void su_solve_pre(){
 	}
 }
 void su_solve1(){
-	su_solve_pre();
 	//ehm... now I have to write code that solves sudokus... I didn't expect to get this far...
 	//for every square check if it is not solved first
 	int i=0;
@@ -331,8 +334,91 @@ void su_solve1(){
 		for(int x=0;x<3;x++)for(int y=0;y<3;y++)
 			sudoku[i]&=~(1<<(sudoku2[bx*3+x+(by*3+y)*9]-1));
 		sudoku2[i] = su_val(sudoku[i]);
-
 	}
+}
+
+void su_solve2(){
+	//for every square check if it is not solved first
+	int i=0;
+	for(int iy=0;iy<9;iy++)for(int ix=0;ix<9;i++,ix++)if(su_val(sudoku[i])==0){
+		//Check for every unsolved field if a number is only possible in this field
+		int bx  = ix/3;
+		int by  = iy/3;
+		for(int j=0; j<9;j++)if(sudoku[i]&(1<<j)){//Check for every number 0-8 if it can only accur in this field, if yes, it must be here.
+			{	//waagerecht
+				int n=0; //how many fields have this number as a possibility?
+				for(int x=0;x<9;x++){
+					if(sudoku[iy*9+x]&(1<<j))
+						n++;
+					//sudoku[i]&=~(1<<(sudoku2[iy*9+x]-1));
+				}
+				if(n==1)//There was only one field in which 1 was possible (and it is possible in this one) so 1 must be in this field!
+					sudoku[i]=1<<j;
+			}{	//senkrecht
+				int n=0; //how many fields have this number as a possibility?
+				for(int y=0;y<9;y++){
+					if(sudoku[y*9+ix]&(1<<j))
+						n++;
+					//sudoku[i]&=~(1<<(sudoku2[y*9+ix]-1));
+				}
+				if(n==1)//There was only one field in which 1 was possible (and it is possible in this one) so 1 must be in this field!
+					sudoku[i]=1<<j;
+			}{	//feld
+				int n=0; //how many fields have this number as a possibility?
+				for(int x=0;x<3;x++)for(int y=0;y<3;y++){
+					if(sudoku[bx*3+x+(by*3+y)*9]&(1<<j))
+						n++;
+					//sudoku[i]&=~(1<<(sudoku2[bx*3+x+(by*3+y)*9]-1));
+				}
+				if(n==1)//There was only one field in which 1 was possible (and it is possible in this one) so 1 must be in this field!
+					sudoku[i]=1<<j;
+			}
+			sudoku2[i] = su_val(sudoku[i]);
+		}
+	}
+}
+
+void set(int x, int y, int n){ //This takes in stupid human numbers from 1 to 9
+	sudoku[x-1+9*(y-1)]=1<<(n-1);
+}
+void su_zeitung(){
+	su_clear();
+	set(2,2,5);
+	set(3,2,9);
+	set(2,3,2);
+	
+	set(5,1,2);
+	set(4,3,1);
+	set(6,3,9);
+
+	set(7,2,2);
+	set(8,2,8);
+	set(8,3,7);
+
+	set(3,4,1);
+	set(1,5,6);
+	set(3,6,4);
+
+	set(4,4,6);
+	set(6,4,4);
+	set(4,6,2);
+	set(6,6,1);
+
+	set(7,4,3);
+	set(7,6,7);
+	set(9,5,5);
+
+	set(2,7,4);
+	set(2,8,9);
+	set(3,8,8);
+
+	set(4,7,8);
+	set(5,9,7);
+	set(6,7,5);
+
+	set(7,8,4);
+	set(8,7,2);
+	set(8,8,5);
 }
 
 //The acutal main
@@ -385,8 +471,10 @@ void main2(){
 					}else if(menuselected==MENU_RANDOM){su_random();
 					}else if(menuselected==MENU_75){su_75();
 					}else if(menuselected==MENU_SET){su_set();
-					}else if(menuselected==MENU_SOLVE_1){su_solve1();
 					}else if(menuselected==MENU_CHECK){su_check();
+					}else if(menuselected==MENU_SOLVE_1){su_solve_pre();su_solve1();
+					}else if(menuselected==MENU_SOLVE_2){su_solve2();
+					}else if(menuselected==MENU_ZEITUNG){su_zeitung();
 					}
 				}
 			}
